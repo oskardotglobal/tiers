@@ -79,6 +79,21 @@ window.addEventListener('load', () => {
 
 	bind_title_events();
 
+	// Load preset from URL search params
+  let loadUrl = new URLSearchParams(window.location.search).get("load");
+  if (loadUrl) {
+    fetch(loadUrl)
+      .then(response => response.json())
+      .then(parsed => {
+        if (!parsed) {
+          alert("Failed to parse data");
+          return;
+        }
+        hard_reset_list();
+        load_tierlist(parsed);
+      });
+  }
+
 	document.getElementById('load-img-input').addEventListener('input', (evt) => {
 		// @Speed: maybe we can do some async stuff to optimize this
 		let images = document.querySelector('.images');
