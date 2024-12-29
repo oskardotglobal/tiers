@@ -17,15 +17,18 @@
 const MAX_NAME_LEN = 200;
 const DEFAULT_TIERS = ['S','A','B','C','D','E','F'];
 const TIER_COLORS = [
-	// from S to F
-	'#ff6666',
-	'#f0a731',
-	'#f4d95b',
-	'#66ff66',
-	'#58c8f4',
-	'#5b76f4',
-	'#f45bed'
+  "#ff6666", // Red
+  "#ff8a66", // Light Red-Orange
+  "#ffae66", // Orange
+  "#ffd266", // Light Orange-Yellow
+  "#f4d95b", // Yellow
+  "#a4ec66", // Light Green
+  "#66ff66", // Green
+  "#66ffb2", // Aqua Green
+  "#66f4f4", // Aqua Blue
+  "#5b76f4"  // Blue
 ];
+const MAX_IMG_HEIGHT = 200;
 
 let unique_id = 0;
 
@@ -98,13 +101,11 @@ window.addEventListener('load', () => {
 		// @Speed: maybe we can do some async stuff to optimize this
 		let images = document.querySelector('.images');
 		for (let file of evt.target.files) {
-			let reader = new FileReader();
-			reader.addEventListener('load', (load_evt) => {
-				let img = create_img_with_src(load_evt.target.result);
-				images.appendChild(img);
-				unsaved_changes = true;
-			});
-			reader.readAsDataURL(file);
+		  compress_image(file, (webpDataUrl) => {
+        let img = create_img_with_src(webpDataUrl);
+        images.appendChild(img);
+        unsaved_changes = true;
+      });
 		}
 	});
 
@@ -115,14 +116,11 @@ window.addEventListener('load', () => {
 		let images = document.querySelector('.images');
 		for (let item of items) {
 			if (item.kind === 'file') {
-				let blob = item.getAsFile();
-				let reader = new FileReader();
-				reader.onload = (load_evt) => {
-					let img = create_img_with_src(load_evt.target.result);
-					images.appendChild(img);
-					unsaved_changes = true;
-				};
-				reader.readAsDataURL(blob);
+				compress_image(item.getAsFile(), (webpDataUrl) => {
+          let img = create_img_with_src(webpDataUrl);
+          images.appendChild(img);
+          unsaved_changes = true;
+        });
 			}
 		}
 	};
@@ -168,6 +166,26 @@ window.addEventListener('load', () => {
 		return msg;
 	});
 });
+
+function compress_image(imageFile, callback) {
+  const reader = new FileReader();
+  reader.readAsDataURL(imageFile);
+  reader.onload = (event) => {
+    let imgElement = new Image();
+    imgElement.src = event.target.result;
+    imgElement.onload = () => {
+      const canvas = document.createElement('canvas');
+      let scale = MAX_IMG_HEIGHT / imgElement.height;
+      canvas.width = imgElement.width * scale;
+      canvas.height = MAX_IMG_HEIGHT;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+
+      callback(canvas.toDataURL('image/webp'));
+    };
+  };
+}
 
 function create_img_with_src(src) {
 	let img = document.createElement('img');
